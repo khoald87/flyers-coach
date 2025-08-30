@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cẩm Nang Tương Tác: Chinh Phục IC3 Spark Lớp 3 (Nâng cấp)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: "Soothing Sky" -->
+    <!-- Application Structure Plan: A single-page application (SPA) with a fixed sidebar navigation for switching between four main thematic sections: "Giới thiệu" (Introduction), "Lộ trình học" (Learning Path), "Luyện thi" (Exam Practice), and "Tài nguyên" (Resources). This structure was chosen to break down the dense report content into manageable, non-linear modules, allowing users (parents and students) to freely explore topics based on their immediate needs. The "Lộ trình học" section is the core, featuring an interactive card-based layout for the 7 domains, each with its own tabbed interface for "Lý thuyết," "Thực hành," and an interactive "Ôn tập" quiz. This user-centric, task-oriented design enhances engagement and learning retention compared to a linear document. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: The 7 core domains of the IC3 GS6 exam.
+        - Goal: Provide a quick visual overview of the entire curriculum's scope.
+        - Viz/Presentation: Doughnut Chart (Chart.js).
+        - Interaction: Hovering over a segment reveals the domain's name.
+        - Justification: A doughnut chart is an excellent, visually appealing way to represent parts of a whole, making the 7-domain structure immediately understandable.
+        - Report Info: Multiple-choice review questions for each domain.
+        - Goal: Allow for active recall and self-assessment.
+        - Viz/Presentation: Interactive Quiz (HTML/CSS/JS) with a new random quiz generation feature.
+        - Interaction: Users click an option, and the UI provides immediate visual feedback. A new button allows generating a new, random set of questions from a larger pool.
+        - Justification: This transforms passive reading into an active learning experience. The randomization feature increases replayability and prevents rote memorization, ensuring a deeper understanding of the concepts.
+        - Report Info: Comparison tables, resource lists.
+        - Goal: Present structured data clearly.
+        - Viz/Presentation: Styled HTML tables with Tailwind CSS.
+        - Justification: Tables are the standard and most effective way to display structured comparative data, and Tailwind makes them clean and responsive.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; }
+        .nav-link { transition: all 0.2s ease-in-out; }
+        .nav-link.active { background-color: #0c4a6e; color: white; }
+        .nav-link:not(.active):hover { background-color: #f0f9ff; color: #0c4a6e; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .quiz-option { cursor: pointer; border: 2px solid transparent; transition: all 0.2s ease-in-out; }
+        .quiz-option:hover { border-color: #38bdf8; }
+        .quiz-option.correct { background-color: #dcfce7; border-color: #22c55e; color: #15803d; }
+        .quiz-option.incorrect { background-color: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+        .quiz-option.disabled { cursor: not-allowed; pointer-events: none; }
+        .domain-tab { cursor: pointer; transition: all 0.2s ease-in-out; }
+        .domain-tab.active { border-color: #0ea5e9; color: #0ea5e9; font-weight: 600; }
+        .domain-content { display: none; }
+        .domain-content.active { display: block; }
+        .prose img { border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); margin-top: 1rem; margin-bottom: 1rem; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <!-- Sidebar Navigation -->
+        <aside class="w-full md:w-64 bg-white md:border-r border-b md:border-b-0 border-slate-200 flex-shrink-0">
+            <div class="p-4 border-b border-slate-200">
+                <h1 class="text-xl font-bold text-sky-800 text-center md:text-left">🚀 IC3 Spark Lớp 3</h1>
+                <p class="text-xs text-slate-500 text-center md:text-left">Cẩm nang ôn luyện (Nâng cấp)</p>
+            </div>
+            <nav id="main-nav" class="flex md:flex-col p-2">
+                <a href="#" data-target="gioi-thieu" class="nav-link flex-1 md:w-full flex items-center gap-3 p-3 rounded-lg font-medium text-slate-700 active">
+                    <span>🏠</span> Giới thiệu
+                </a>
+                <a href="#" data-target="lo-trinh-hoc" class="nav-link flex-1 md:w-full flex items-center gap-3 p-3 rounded-lg font-medium text-slate-700">
+                    <span>📚</span> Lộ trình học
+                </a>
+                <a href="#" data-target="luyen-thi" class="nav-link flex-1 md:w-full flex items-center gap-3 p-3 rounded-lg font-medium text-slate-700">
+                    <span>🎯</span> Luyện thi
+                </a>
+                <a href="#" data-target="tai-nguyen" class="nav-link flex-1 md:w-full flex items-center gap-3 p-3 rounded-lg font-medium text-slate-700">
+                    <span>📖</span> Tài nguyên
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 sm:p-6 lg:p-8">
+            <!-- Section: Giới thiệu -->
+            <section id="gioi-thieu" class="content-section active space-y-8">
+                <div class="p-8 bg-gradient-to-br from-sky-500 to-cyan-400 rounded-2xl text-white shadow-lg">
+                    <h2 class="text-3xl font-bold mb-2">Chinh phục Chứng chỉ Tin học IC3 Spark!</h2>
+                    <p class="text-sky-100 max-w-3xl">Chào mừng quý phụ huynh và các em học sinh đến với cẩm nang tương tác giúp trang bị những kỹ năng số thiết yếu cho tương lai. Hãy cùng nhau khám phá, học hỏi và tự tin bước vào thế giới công nghệ qua từng bài học được thiết kế sinh động và dễ hiểu.</p>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">IC3 Spark là gì?</h3>
+                    <div class="prose max-w-none text-slate-600 space-y-4">
+                        <p>IC3 Spark, viết tắt của Internet and Computing Core Certification Spark, là chứng chỉ quốc tế uy tín chứng nhận các kỹ năng cơ bản về sử dụng máy tính và Internet, được thiết kế chuyên biệt cho học sinh tiểu học. Được cấp bởi Tổ chức Khảo thí Tin học Certiport (Hoa Kỳ), chứng chỉ này có giá trị toàn cầu và là bước khởi đầu hoàn hảo trên hành trình trở thành công dân số tự tin, có trách nhiệm.</p>
+                        <ul class="list-disc list-inside">
+                            <li><span class="font-semibold">Hỗ trợ học tập:</span> Giúp các em tự tin làm bài thuyết trình, soạn thảo văn bản, và tìm kiếm thông tin hiệu quả.</li>
+                            <li><span class="font-semibold">Phát triển kỹ năng sống:</span> Dạy trẻ cách sử dụng Internet an toàn, bảo vệ thông tin cá nhân và tránh xa các rủi ro trên mạng.</li>
+                            <li><span class="font-semibold">Định hướng tương lai:</span> Là nền tảng vững chắc để chinh phục các chứng chỉ cao hơn và là điểm cộng cho hồ sơ học tập.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">So sánh các phiên bản: GS6 vs. GS4</h3>
+                    <p class="text-slate-600 mb-4">Điều quan trọng là tập trung ôn luyện theo chuẩn IC3 GS6 mới nhất, vì nó phản ánh đầy đủ hơn các kỹ năng cần thiết trong thế giới số hiện đại. Dưới đây là bảng so sánh chính.</p>
+                    <div class="overflow-x-auto bg-white rounded-lg shadow">
+                        <table class="w-full text-sm text-left text-slate-600">
+                            <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Tiêu chí</th>
+                                    <th scope="col" class="px-6 py-3">IC3 GS4 Spark (Cũ)</th>
+                                    <th scope="col" class="px-6 py-3">IC3 GS6 Spark (Mới)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="bg-white border-b">
+                                    <th scope="row" class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">Cấu trúc bài thi</th>
+                                    <td class="px-6 py-4">3 bài thi thành phần riêng biệt (CF, KA, LO).</td>
+                                    <td class="px-6 py-4">3 bài thi theo 3 Cấp độ (Level 1, 2, 3), mỗi bài tích hợp nhiều lĩnh vực.</td>
+                                </tr>
+                                <tr class="bg-slate-50 border-b">
+                                    <th scope="row" class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">Nội dung chính</th>
+                                    <td class="px-6 py-4">Tập trung vào 3 trụ cột: Phần cứng/phần mềm, ứng dụng, Internet.</td>
+                                    <td class="px-6 py-4">Mở rộng thành 7 lĩnh vực cốt lõi, bao gồm Công dân số, Cộng tác, An toàn & Bảo mật.</td>
+                                </tr>
+                                <tr class="bg-white">
+                                    <th scope="row" class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">Hình thức cấp chứng chỉ</th>
+                                    <td class="px-6 py-4">Phải đỗ cả 3 bài thi thành phần.</td>
+                                    <td class="px-6 py-4">Thi đạt cấp độ nào, nhận chứng chỉ cấp độ đó.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section: Lộ trình học -->
+            <section id="lo-trinh-hoc" class="content-section space-y-8">
+                <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col md:flex-row items-center gap-6">
+                    <div class="flex-shrink-0">
+                         <div class="chart-container relative w-48 h-48 mx-auto">
+                            <canvas id="domainsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="text-3xl font-bold text-slate-800">Lộ trình học 7 Chuyên đề</h2>
+                        <p class="text-slate-600 mt-2 max-w-3xl">Bài thi IC3 GS6 Level 1 là một bài thi duy nhất, tích hợp kiến thức từ 7 lĩnh vực cốt lõi của năng lực số. Hãy khám phá từng chuyên đề bên dưới để xây dựng một nền tảng vững chắc. Biểu đồ thể hiện 7 phần kiến thức quan trọng mà các em sẽ được học.</p>
+                    </div>
+                </div>
+                
+                <div id="domains-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                </div>
+            </section>
+
+            <!-- Section: Luyện thi -->
+            <section id="luyen-thi" class="content-section space-y-8">
+                <h2 class="text-3xl font-bold text-slate-800">Chiến lược Ôn tập & Thi cử</h2>
+                <p class="text-slate-600 max-w-3xl">Chuẩn bị kỹ lưỡng là chìa khóa để thành công. Dưới đây là những phương pháp và lời khuyên giúp các em tự tin nhất khi bước vào phòng thi.</p>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow">
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">Phương pháp học tập hiệu quả</h3>
+                        <ul class="space-y-3 text-slate-600">
+                            <li class="flex items-start gap-3">
+                                <span class="text-sky-500 mt-1">💡</span>
+                                <div><span class="font-semibold">Lý thuyết đi đôi với thực hành:</span> Sau mỗi phần lý thuyết, hãy để bé thực hành ngay trên máy tính để kiến thức trở nên sống động và dễ nhớ.</div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="text-sky-500 mt-1">🎮</span>
+                                <div><span class="font-semibold">Học qua trò chơi:</span> Sử dụng các ứng dụng như Quizlet để tạo flashcard, trò chơi ô chữ về thuật ngữ tin học, giúp việc học trở nên thú vị hơn.</div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow">
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">Luyện thi thử</h3>
+                        <ul class="space-y-3 text-slate-600">
+                           <li class="flex items-start gap-3">
+                                <span class="text-sky-500 mt-1">💻</span>
+                                <div><span class="font-semibold">Làm quen với GMetrix:</span> Đây là phần mềm luyện thi được Certiport công nhận, mô phỏng chính xác bài thi thật. Luyện tập thường xuyên giúp bé làm quen với giao diện và áp lực thời gian.</div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="text-sky-500 mt-1">✅</span>
+                                <div><span class="font-semibold">Trắc nghiệm Online:</span> Tận dụng các trang web uy tín để làm bài trắc nghiệm củng cố kiến thức theo từng chuyên đề.</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3">Chuẩn bị cho ngày thi</h3>
+                    <div class="grid sm:grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <h4 class="font-semibold text-slate-700">📄 Giấy tờ</h4>
+                            <p class="text-slate-600 text-sm">Chuẩn bị sẵn bản sao giấy khai sinh hoặc thẻ học sinh có ảnh và dấu giáp lai của trường.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-slate-700">🧘 Tâm lý</h4>
+                            <p class="text-slate-600 text-sm">Tạo cho con tâm lý thoải mái, xem đây là một trải nghiệm để thử sức. Đừng đặt nặng áp lực điểm số.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-slate-700">📝 Chiến lược làm bài</h4>
+                            <p class="text-slate-600 text-sm">Dặn dò con đọc kỹ câu hỏi, câu nào khó có thể tạm bỏ qua và làm sau. Luôn để ý thời gian làm bài còn lại.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Section: Tài nguyên -->
+            <section id="tai-nguyen" class="content-section space-y-8">
+                <h2 class="text-3xl font-bold text-slate-800">Kho Tài nguyên Học tập</h2>
+                <p class="text-slate-600 max-w-3xl">Dưới đây là danh sách các tài nguyên học liệu được tổng hợp và chọn lọc kỹ lưỡng để hỗ trợ quá trình ôn tập của các em.</p>
+
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-4">Sách và Giáo trình khuyên dùng</h3>
+                    <div class="overflow-x-auto bg-white rounded-lg shadow">
+                         <table class="w-full text-sm text-left text-slate-600">
+                            <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Tên sách/Bộ sách</th>
+                                    <th scope="col" class="px-6 py-3">Tác giả/NXB</th>
+                                    <th scope="col" class="px-6 py-3">Mô tả</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="bg-white border-b">
+                                    <th class="px-6 py-4 font-medium">Tin học Quốc tế IC3 GS6 Spark - Level 1</th>
+                                    <td class="px-6 py-4">IIG Việt Nam</td>
+                                    <td class="px-6 py-4">Sách chính thức, bám sát mục tiêu bài thi, trình bày gần gũi.</td>
+                                </tr>
+                                <tr class="bg-slate-50 border-b">
+                                    <th class="px-6 py-4 font-medium">IC3 Spark – Máy Tính Thật Đơn Giản</th>
+                                    <td class="px-6 py-4">IIG Việt Nam</td>
+                                    <td class="px-6 py-4">Tập trung vào kiến thức nền tảng về hệ điều hành, phần cứng, phần mềm.</td>
+                                </tr>
+                                <tr class="bg-white">
+                                    <th class="px-6 py-4 font-medium">Sách giáo khoa Tin học Lớp 3</th>
+                                    <td class="px-6 py-4">Bộ GD&ĐT</td>
+                                    <td class="px-6 py-4">Cung cấp kiến thức nền tảng theo chương trình chuẩn, dùng làm tài liệu bổ trợ.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-4">Nền tảng và Phần mềm Luyện thi</h3>
+                    <div class="overflow-x-auto bg-white rounded-lg shadow">
+                         <table class="w-full text-sm text-left text-slate-600">
+                            <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Nền tảng</th>
+                                    <th scope="col" class="px-6 py-3">Đơn vị cung cấp</th>
+                                    <th scope="col" class="px-6 py-3">Tính năng chính</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="bg-white border-b">
+                                    <th class="px-6 py-4 font-medium">GMetrix</th>
+                                    <td class="px-6 py-4">Certiport</td>
+                                    <td class="px-6 py-4">Luyện thi và thi thử với các bài thi mô phỏng giống hệt thi thật.</td>
+                                </tr>
+                                <tr class="bg-slate-50 border-b">
+                                    <th class="px-6 py-4 font-medium">Emyeutinhoc.com</th>
+                                    <td class="px-6 py-4">Cộng đồng</td>
+                                    <td class="px-6 py-4">Cung cấp tài liệu và các bài trắc nghiệm online theo chủ đề.</td>
+                                </tr>
+                                <tr class="bg-white">
+                                    <th class="px-6 py-4 font-medium">Quizlet</th>
+                                    <td class="px-6 py-4">Quizlet Inc.</td>
+                                    <td class="px-6 py-4">Học tập qua flashcard và trò chơi, ghi nhớ thuật ngữ hiệu quả.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mainNav = document.getElementById('main-nav');
+            const navLinks = mainNav.querySelectorAll('a');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            const domainData = [
+                {
+                    id: 'can-ban-cong-nghe',
+                    icon: '💻',
+                    title: 'Căn bản về Công nghệ',
+                    theory: `
+                        <h4>1. Máy tính là gì?</h4>
+                        <p>Máy tính là một thiết bị điện tử thông minh, giúp chúng ta học tập, làm việc và giải trí. Có nhiều loại máy tính khác nhau:</p>
+                        <ul class="list-disc list-inside space-y-1 pl-4 my-2">
+                            <li><strong>Máy tính để bàn (Desktop):</strong> Thường to, mạnh, đặt cố định ở một chỗ, gồm có màn hình và thân máy riêng.</li>
+                            <li><strong>Máy tính xách tay (Laptop):</strong> Gọn nhẹ, có thể mang đi khắp nơi.</li>
+                            <li><strong>Máy tính bảng (Tablet):</strong> Màn hình cảm ứng, rất tiện lợi để đọc sách, xem phim.</li>
+                        </ul>
+                        <img src="https://images.unsplash.com/photo-1541807084-5c52b6b3adef?q=80&w=1974&auto=format&fit=crop" alt="Các loại máy tính" onerror="this.onerror=null;this.src='https://placehold.co/600x300/e0f2fe/0c4a6e?text=Không+tải+được+ảnh';">
+                        
+                        <h4>2. Phần cứng (Hardware) - Những bộ phận con chạm vào được</h4>
+                        <p>Phần cứng là tất cả các bộ phận vật lý của máy tính. Giống như cơ thể của chúng ta vậy!</p>
+                        <ul class="list-disc list-inside space-y-1 pl-4 my-2">
+                            <li><strong>Thiết bị nhập (Input Devices):</strong> Đưa thông tin vào máy tính (Bàn phím, Chuột, Micro).</li>
+                            <li><strong>Thiết bị xuất (Output Devices):</strong> Đưa thông tin từ máy tính ra ngoài (Màn hình, Máy in, Loa).</li>
+                            <li><strong>Bộ xử lý trung tâm (CPU):</strong> Được ví như "bộ não" của máy tính, quyết định mọi việc.</li>
+                            <li><strong>Bộ nhớ (Memory):</strong> Nơi lưu trữ thông tin (RAM - bộ nhớ tạm, Ổ cứng - bộ nhớ lâu dài).</li>
+                        </ul>
+                         <img src="https://images.pexels.com/photos/1779487/pexels-photo-1779487.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Các bộ phận phần cứng" onerror="this.onerror=null;this.src='https://placehold.co/600x300/cffafe/155e75?text=Không+tải+được+ảnh';">
+
+                        <h4>3. Phần mềm (Software) - "Linh hồn" của máy tính</h4>
+                        <p>Phần mềm là các chương trình, chỉ dẫn được cài đặt bên trong máy tính, chúng ta không chạm vào được.</p>
+                        <ul class="list-disc list-inside space-y-1 pl-4 my-2">
+                            <li><strong>Hệ điều hành (Operating System - OS):</strong> Là "nhạc trưởng" quản lý tất cả phần cứng và phần mềm. Ví dụ phổ biến nhất là <strong>Windows</strong>.</li>
+                            <li><strong>Phần mềm ứng dụng (Application Software):</strong> Giúp con thực hiện các công việc cụ thể. Ví dụ: Microsoft Word để soạn thảo, Google Chrome để lướt web, Paint để vẽ.</li>
+                        </ul>
+                        
+                        <h4>4. Tệp (File) và Thư mục (Folder) - Tổ chức "căn phòng" số</h4>
+                        <p>Để giữ cho máy tính gọn gàng, chúng ta cần sắp xếp thông tin vào các tệp và thư mục.</p>
+                        <ul class="list-disc list-inside space-y-1 pl-4 my-2">
+                            <li><strong>Tệp (File):</strong> Là một đơn vị lưu trữ thông tin. Mỗi tệp có một tên và một "đuôi" (phần mở rộng) để máy tính biết nó là loại tệp gì (ví dụ: .docx cho Word, .jpg cho ảnh).</li>
+                            <li><strong>Thư mục (Folder):</strong> Giống như một chiếc cặp sách, dùng để chứa các tệp và các thư mục con khác.</li>
+                        </ul>
+                    `,
+                    practice: `
+                        <ol class="list-decimal list-inside space-y-3">
+                            <li><strong>Khám phá máy tính:</strong> Cùng bé chỉ và gọi tên các bộ phận của máy tính ở nhà. Thảo luận xem máy tính nhà mình là loại gì (để bàn hay xách tay).</li>
+                            <li><strong>Tạo "Ngôi nhà số":</strong> Trên màn hình Desktop, hướng dẫn bé tạo một thư mục mới và đặt tên là tên của bé (ví dụ: "Góc học tập của An").</li>
+                            <li><strong>Sắp xếp đồ đạc:</strong> Bên trong thư mục vừa tạo, hãy tạo thêm 3 thư mục con: "Bài tập Toán", "Bài tập Tiếng Việt", và "Tranh vẽ".</li>
+                            <li><strong>Lưu sản phẩm đầu tay:</strong> Mở phần mềm Paint, vẽ một bức tranh về ngôi nhà. Hướng dẫn bé lưu tệp này với tên "NgoiNhaCuaEm.jpg" vào đúng thư mục "Tranh vẽ".</li>
+                            <li><strong>Thao tác nhanh:</strong> Dạy bé cách đổi tên thư mục "Bài tập Toán" thành "Toán học vui". Sau đó, sao chép (copy) và dán (paste) tệp "NgoiNhaCuaEm.jpg" ra ngoài màn hình Desktop.</li>
+                        </ol>
+                    `,
+                    quiz: [
+                        { q: 'Đâu là thiết bị dùng để đưa chữ và số vào máy tính?', o: ['Màn hình', 'Chuột', 'Bàn phím', 'Máy in'], a: 2 },
+                        { q: '"Bộ não" của máy tính được gọi là gì?', o: ['RAM', 'CPU', 'Ổ cứng', 'Màn hình'], a: 1 },
+                        { q: 'Phần mềm nào quản lý tất cả các hoạt động của máy tính?', o: ['Microsoft Word', 'Hệ điều hành', 'Google Chrome', 'Paint'], a: 1 },
+                        { q: 'Để chứa nhiều tệp tin cho gọn gàng, ta nên dùng cái gì?', o: ['Tệp (File)', 'Thư mục (Folder)', 'Màn hình', 'Chuột'], a: 1 },
+                        { q: 'Đâu là một ví dụ về phần mềm ứng dụng?', o: ['Windows 10', 'Microsoft Word', 'CPU', 'RAM'], a: 1 },
+                        { q: 'Thiết bị nào sau đây là thiết bị xuất?', o: ['Bàn phím', 'Micro', 'Loa', 'Chuột'], a: 2 },
+                        { q: 'Phần mở rộng của một tệp tin hình ảnh thường là gì?', o: ['.docx', '.mp3', '.jpg', '.xlsx'], a: 2 },
+                        { q: 'Khi con tắt máy tính, dữ liệu trong bộ phận nào sẽ bị mất đi?', o: ['Ổ cứng', 'CPU', 'RAM', 'Màn hình'], a: 2 }
+                    ]
+                },
+                {
+                    id: 'cong-dan-ky-nguyen-so',
+                    icon: '🧑‍💻',
+                    title: 'Công dân Kỷ nguyên số',
+                    theory: `
+                        <h4>1. Công dân số là ai?</h4>
+                        <p>Khi chúng ta lên mạng, chúng ta trở thành một "công dân" trong một thế giới đặc biệt gọi là thế giới số. Một <strong>công dân số (Digital Citizen)</strong> tốt là người biết cách sử dụng Internet và các thiết bị công nghệ một cách thông minh, an toàn và lịch sự.</p>
+                        
+                        <h4>2. Dấu chân kỹ thuật số (Digital Footprint)</h4>
+                        <p>Hãy tưởng tượng con đi trên cát và để lại dấu chân. Trên Internet cũng vậy! Mọi thứ con làm, từ một bình luận, một nút "Thích", một bức ảnh con đăng, đều để lại một "dấu chân kỹ thuật số". Những dấu chân này sẽ tạo nên hình ảnh của con trong mắt người khác. Vì vậy, hãy luôn để lại những dấu chân đẹp và tích cực nhé!</p>
+                        <img src="https://images.unsplash.com/photo-1611605698335-8b1569810432?q=80&w=1974&auto=format&fit=crop" alt="Dấu chân kỹ thuật số" onerror="this.onerror=null;this.src='https://placehold.co/600x300/dcfce7/15803d?text=Không+tải+được+ảnh';">
+
+                        <h4>3. Quy tắc ứng xử trên mạng (Netiquette)</h4>
+                        <p>Netiquette là sự kết hợp của "Net" (mạng) và "etiquette" (phép lịch sự). Đây là những quy tắc vàng khi giao tiếp online:</p>
+                        <ul class="list-disc list-inside space-y-1 pl-4 my-2">
+                            <li><strong>Nói lời hay, ý đẹp:</strong> Luôn sử dụng ngôn từ lịch sự, tôn trọng, không nói tục, không chế giễu người khác.</li>
+                            <li><strong>Tôn trọng sự khác biệt:</strong> Mọi người có thể có ý kiến khác con, hãy tôn trọng điều đó.</li>
+                            <li><strong>KHÔNG VIẾT IN HOA:</strong> Viết in hoa toàn bộ một câu trên mạng giống như con đang HÉT LÊN vậy, hãy tránh nhé.</li>
+                            <li><strong>Chia sẻ thông tin có kiểm chứng:</strong> Đừng vội vàng chia sẻ những tin tức mà con không biết chắc là đúng hay sai.</li>
+                            <li><strong>Tôn trọng riêng tư:</strong> Không tự ý đăng ảnh, video hay thông tin cá nhân của người khác khi chưa được phép.</li>
+                        </ul>
+                    `,
+                    practice: `
+                        <ol class="list-decimal list-inside space-y-3">
+                            <li><strong>Thảo luận tình huống 1:</strong> "Một bạn trong lớp đăng một bức ảnh không đẹp của con lên mạng và các bạn khác vào trêu chọc. Con sẽ cảm thấy thế nào và sẽ làm gì?". (Gợi ý: Nói với bố mẹ, không trả lời các bình luận đó).</li>
+                            <li><strong>Thảo luận tình huống 2:</strong> "Con xem một video hướng dẫn vẽ rất hay trên YouTube. Con muốn viết bình luận để cảm ơn, con sẽ viết như thế nào cho lịch sự?".</li>
+                            <li><strong>Soạn thảo quy tắc:</strong> Cùng con viết ra 3 quy tắc quan trọng nhất của gia đình mình khi sử dụng Internet. Dán ở nơi dễ thấy để cùng nhau thực hiện.</li>
+                        </ol>
+                    `,
+                    quiz: [
+                        { q: 'Hành động nào sau đây thể hiện một công dân số tốt?', o: ['Chế giễu bài viết của bạn bè.', 'Gửi lời chúc mừng sinh nhật bạn trên mạng xã hội.', 'Đăng thông tin sai về một người bạn.', 'Tự ý lấy ảnh của bạn khác làm ảnh đại diện của mình.'], a: 1 },
+                        { q: 'Viết bình luận bằng chữ IN HOA toàn bộ có nghĩa là gì?', o: ['Thể hiện sự tôn trọng.', 'Giống như đang la hét.', 'Làm cho chữ đẹp hơn.', 'Giúp người khác dễ đọc hơn.'], a: 1 },
+                        { q: 'Khi thấy một tin tức giật gân trên mạng, con nên làm gì đầu tiên?', o: ['Chia sẻ ngay cho bạn bè.', 'Tin ngay đó là sự thật.', 'Hỏi ý kiến bố mẹ hoặc thầy cô.', 'Bình luận chỉ trích.'], a: 2 },
+                        { q: '"Dấu chân kỹ thuật số" là gì?', o: ['Là dấu giày của con trên máy tính.', 'Là mọi hoạt động con để lại trên Internet.', 'Là hình nền máy tính của con.', 'Là một loại virus.'], a: 1 },
+                        { q: 'Tại sao không nên tự ý đăng ảnh của người khác lên mạng?', o: ['Vì ảnh sẽ bị mờ.', 'Vì tốn dung lượng máy tính.', 'Vì đó là thông tin riêng tư của họ.', 'Vì không ai xem đâu.'], a: 2 }
+                    ]
+                },
+                 {
+                    id: 'quan-ly-thong-tin',
+                    icon: '🌐',
+                    title: 'Quản lý Thông tin',
+                    theory: `
+                        <h4>1. Khám phá thế giới Internet</h4>
+                        <p>Internet là một mạng lưới máy tính khổng lồ kết nối toàn thế giới, giống như một thư viện vô tận chứa đầy thông tin. Để vào được thư viện này, chúng ta cần các công cụ đặc biệt.</p>
+                        <ul class="list-disc list-inside space-y-1 pl-4 my-2">
+                            <li><strong>Trình duyệt web (Web Browser):</strong> Là cánh cửa để con bước vào Internet. Các trình duyệt phổ biến là Google Chrome, Cốc Cốc, Safari.</li>
+                            <li><strong>Công cụ tìm kiếm (Search Engine):</strong> Là "bác thủ thư" thông thái giúp con tìm đúng cuốn sách (thông tin) mình cần. Google là công cụ tìm kiếm nổi tiếng nhất.</li>
+                        </ul>
+                        <img src="https://images.pexels.com/photos/5083490/pexels-photo-5083490.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Trình duyệt và Công cụ tìm kiếm" onerror="this.onerror=null;this.src='https://placehold.co/600x300/fefce8/a16207?text=Không+tải+được+ảnh';">
+                        
+                        <h4>2. Kỹ năng tìm kiếm thông tin</h4>
+                        <p>Để "bác thủ thư" Google hiểu ý con, con cần nói đúng "từ khóa".</p>
+                         <ul class="list-disc list-inside space-y-1 pl-4 my-2">
+                            <li><strong>Từ khóa (Keyword):</strong> Là những từ hoặc cụm từ quan trọng nhất về điều con muốn tìm. Ví dụ, thay vì hỏi "Con khủng long bạo chúa trông như thế nào ạ?", con chỉ cần gõ từ khóa "khủng long bạo chúa".</li>
+                            <li><strong>Đánh giá thông tin:</strong> Không phải thông tin nào trên mạng cũng đúng. Hãy ưu tiên các trang web của trường học (.edu), chính phủ (.gov) hoặc các trang tin tức uy tín. Nếu không chắc, hãy hỏi bố mẹ.</li>
+                        </ul>
+
+                        <h4>3. Lưu lại trang web yêu thích</h4>
+                        <p>Khi tìm thấy một trang web hay, con có thể "đánh dấu" (Bookmark) nó lại để lần sau vào xem lại cho nhanh, không cần tìm kiếm lại từ đầu. Biểu tượng đánh dấu trang thường là một ngôi sao ★ trên thanh địa chỉ.</p>
+                    `,
+                    practice: `
+                        <ol class="list-decimal list-inside space-y-3">
+                            <li><strong>Mở trình duyệt:</strong> Mở Google Chrome.</li>
+                            <li><strong>Tìm kiếm thông minh:</strong> Hướng dẫn bé tìm kiếm với các từ khóa khác nhau: "thời tiết Hà Nội hôm nay", "cách làm slime đơn giản", "hình ảnh các hành tinh".</li>
+                            <li><strong>So sánh kết quả:</strong> Thử tìm cùng một từ khóa trên Google và Bing để xem sự khác biệt.</li>
+                            <li><strong>Đánh dấu trang:</strong> Hướng dẫn bé cách nhấn vào ngôi sao trên thanh địa chỉ để lưu lại một trang web bé thích (ví dụ: một trang web trò chơi giáo dục).</li>
+                        </ol>
+                    `,
+                    quiz: [
+                         { q: 'Để truy cập vào Internet, con cần mở phần mềm nào?', o: ['Microsoft Word', 'Google Chrome', 'Zalo', 'Máy tính'], a: 1 },
+                         { q: 'Khi muốn tìm thông tin về "Thủ đô Hà Nội", con sẽ gõ cụm từ đó vào đâu?', o: ['Microsoft Word', 'Ô tìm kiếm của Google', 'Thanh địa chỉ của trình duyệt', 'Paint'], a: 1 },
+                         { q: 'Biểu tượng ngôi sao ★ trên trình duyệt thường dùng để làm gì?', o: ['Xóa trang web', 'In trang web', 'Đánh dấu trang (lưu lại)', 'Tải lại trang'], a: 2 },
+                         { q: 'Đâu là một ví dụ về trình duyệt web?', o: ['Google', 'Facebook', 'Safari', 'Gmail'], a: 2 },
+                         { q: 'Để tìm kiếm thông tin đáng tin cậy cho bài tập, con nên ưu tiên trang web có đuôi là gì?', o: ['.com', '.net', '.org', '.edu'], a: 3 }
+                    ]
+                },
+                {
+                    id: 'sang-tao-noi-dung',
+                    icon: '🎨',
+                    title: 'Sáng tạo Nội dung',
+                    theory: `
+                        <h4>1. Giới thiệu các công cụ sáng tạo</h4>
+                        <p>Máy tính cho chúng ta những công cụ tuyệt vời để biến ý tưởng thành sản phẩm. Hai công cụ mà các con sẽ làm quen là Microsoft Word và Microsoft PowerPoint.</p>
+                        <ul class="list-disc list-inside space-y-1 pl-4 my-2">
+                            <li><strong>Microsoft Word:</strong> Giống như một quyển vở và hộp bút thần kỳ, dùng để gõ văn bản, viết truyện, làm thơ, soạn một tấm thiệp...</li>
+                            <li><strong>Microsoft PowerPoint:</strong> Giống như một sân khấu, dùng để tạo các bài trình chiếu (hay còn gọi là slide show) để thuyết trình trước lớp.</li>
+                        </ul>
+                        <img src="https://images.pexels.com/photos/4050315/pexels-photo-4050315.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Soạn thảo trên máy tính" onerror="this.onerror=null;this.src='https://placehold.co/600x300/ede9fe/5b21b6?text=Không+tải+được+ảnh';">
+
+                        <h4>2. Làm việc với văn bản trong Word</h4>
+                        <p>Khi gõ chữ trong Word, con có thể "trang điểm" cho con chữ của mình bằng các công cụ <strong>định dạng (Format)</strong>:</p>
+                        <ul class="list-disc list-inside space-y-1 pl-4 my-2">
+                            <li><strong>Font chữ:</strong> Thay đổi kiểu chữ (ví dụ: Times New Roman, Arial, Calibri).</li>
+                            <li><strong>Cỡ chữ (Font Size):</strong> Làm cho chữ to hơn hoặc nhỏ đi.</li>
+                            <li><strong>Màu chữ (Font Color):</strong> Tô màu cho chữ.</li>
+                            <li><strong>In đậm (Bold), In nghiêng (Italic), Gạch chân (Underline).</strong></li>
+                        </ul>
+
+                        <h4>3. Chèn đối tượng để nội dung sinh động hơn</h4>
+                        <p>Một bài viết hay bài trình chiếu sẽ thú vị hơn nhiều nếu có hình ảnh. Cả Word và PowerPoint đều cho phép con <strong>chèn (Insert)</strong> các đối tượng vào trang.</p>
+                        <ul class="list-disc list-inside space-y-1 pl-4 my-2">
+                            <li><strong>Chèn hình ảnh (Insert Picture):</strong> Con có thể chèn ảnh có sẵn trong máy tính.</li>
+                            <li><strong>Chèn hình khối (Insert Shape):</strong> Chèn các hình cơ bản như hình vuông, tròn, ngôi sao...</li>
+                        </ul>
+                    `,
+                    practice: `
+                        <ol class="list-decimal list-inside space-y-3">
+                            <li><strong>Tấm thiệp điện tử (Word):</strong>
+                                <ul class="list-circle list-inside pl-6">
+                                    <li>Mở Word, gõ dòng chữ "CHÚC MỪNG SINH NHẬT BẠN!".</li>
+                                    <li>Hướng dẫn bé chọn một font chữ bé thích, cho cỡ chữ to lên (ví dụ: 36), và chọn một màu sắc rực rỡ.</li>
+                                    <li>Sử dụng chức năng In đậm (Bold) cho dòng chữ.</li>
+                                    <li>Dạy bé cách tìm và chèn một hình ảnh chiếc bánh sinh nhật từ máy tính vào tấm thiệp.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Album ảnh gia đình (PowerPoint):</strong>
+                                <ul class="list-circle list-inside pl-6">
+                                    <li>Mở PowerPoint, tạo 3 trang (slide).</li>
+                                    <li>Slide 1: Ghi tiêu đề "Gia đình em" với chữ nghệ thuật (WordArt).</li>
+                                    <li>Slide 2: Chèn một ảnh của gia đình và ghi chú thích bên dưới, ví dụ: "Cả nhà đi công viên".</li>
+                                    <li>Slide 3: Chèn một ảnh khác và ghi chú thích.</li>
+                                    <li>Hướng dẫn bé cách xem bài trình chiếu ở chế độ toàn màn hình.</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    `,
+                    quiz: [
+                        { q: 'Để viết một lá đơn xin phép nghỉ học, con nên dùng phần mềm nào?', o: ['PowerPoint', 'Excel', 'Word', 'Chrome'], a: 2 },
+                        { q: 'Chức năng "In đậm" (Bold) dùng để làm gì?', o: ['Làm chữ to hơn.', 'Làm chữ có màu đỏ.', 'Làm chữ đậm nét hơn.', 'Làm chữ bị nghiêng đi.'], a: 2 },
+                        { q: 'Trong PowerPoint, mỗi trang trình bày được gọi là gì?', o: ['Một Document', 'Một Sheet', 'Một Slide', 'Một Page'], a: 2 },
+                        { q: 'Để thêm một bức ảnh vào văn bản Word, con sẽ tìm trong thẻ nào?', o: ['Home', 'Insert', 'View', 'Design'], a: 1 },
+                        { q: 'Phím nào trên bàn phím dùng để xuống dòng khi gõ văn bản?', o: ['Spacebar', 'Shift', 'Enter', 'Caps Lock'], a: 2 },
+                        { q: 'Để tạo một danh sách có dấu chấm ở đầu dòng, con dùng công cụ nào trong Word?', o: ['Numbering', 'Bullets', 'Align Text', 'Font Color'], a: 1 }
+                    ]
+                },
+                {
+                    id: 'giao-tiep',
+                    icon: '💬',
+                    title: 'Giao tiếp',
+                    theory: `
+                        <h4>1. Các phương thức giao tiếp số</h4>
+                        <p>Giao tiếp kỹ thuật số là cách chúng ta nói chuyện, trao đổi thông tin với nhau qua các thiết bị công nghệ. Có nhiều cách khác nhau, mỗi cách phù hợp với một mục đích riêng.</p>
+                        <ul class="list-disc list-inside space-y-1 pl-4 my-2">
+                            <li><strong>Thư điện tử (Email):</strong> Giống như gửi một lá thư trang trọng. Thường dùng để gửi bài tập cho cô giáo, liên lạc với người lớn, hoặc gửi thông tin cần lưu lại cẩn thận.</li>
+                            <li><strong>Tin nhắn tức thời (Instant Message - IM):</strong> Giống như một cuộc trò chuyện nhanh. Tin nhắn được gửi và nhận ngay lập tức. Thường dùng để hỏi bài bạn, trò chuyện với người thân (Ví dụ: Zalo, Messenger).</li>
+                        </ul>
+                        <img src="https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=2070&auto=format&fit=crop" alt="Các ứng dụng giao tiếp" onerror="this.onerror=null;this.src='https://placehold.co/600x300/fef3c7/b45309?text=Không+tải+được+ảnh';">
+
+                        <h4>2. Khi nào dùng phương thức nào?</h4>
+                        <p>Việc chọn đúng công cụ giao tiếp thể hiện sự thông minh và lịch sự của con.</p>
+                         <ul class="list-disc list-inside space-y-1 pl-4 my-2">
+                            <li><strong>Dùng Email khi:</strong> Cần gửi thông tin quan trọng, dài, cần có bằng chứng (ví dụ: đơn xin phép nghỉ học).</li>
+                            <li><strong>Dùng Tin nhắn tức thời khi:</strong> Cần hỏi đáp nhanh, trò chuyện thân mật, thông báo ngắn gọn (ví dụ: "Mẹ ơi con tan học rồi ạ!").</li>
+                        </ul>
+                    `,
+                    practice: `
+                        <ol class="list-decimal list-inside space-y-3">
+                            <li><strong>Soạn email nháp:</strong> Cùng bé mở Gmail, chọn "Soạn thư". Hướng dẫn bé điền địa chỉ người nhận (email của bố mẹ), tiêu đề "Hỏi thăm ông bà", và nội dung thư. Không cần bấm gửi.</li>
+                            <li><strong>Thảo luận:</strong> So sánh sự khác nhau giữa việc gửi một email và gửi một tin nhắn Zalo. "Nếu con muốn gửi cho cô giáo cả một bài văn dài, con nên dùng cách nào?".</li>
+                            <li><strong>Nhận biết biểu tượng:</strong> Chỉ cho bé biểu tượng của Gmail, Zalo, Messenger và hỏi bé đó là ứng dụng gì, dùng để làm gì.</li>
+                        </ol>
+                    `,
+                    quiz: [
+                         { q: 'Khi muốn hỏi bài bạn một câu ngắn và cần trả lời ngay, con nên dùng hình thức nào?', o: ['Gửi Email', 'Gửi tin nhắn Zalo', 'Viết bài đăng trên Facebook', 'Gọi điện thoại'], a: 1 },
+                         { q: 'Để gửi đơn xin phép nghỉ học cho cô giáo một cách trang trọng, con nên dùng gì?', o: ['Tin nhắn tức thời', 'Bình luận trên YouTube', 'Thư điện tử (Email)', 'Tin nhắn SMS'], a: 2 },
+                         { q: 'Phần nào trong email cho người nhận biết nội dung chính của thư?', o: ['Người nhận (To)', 'Tiêu đề (Subject)', 'Nội dung (Body)', 'Tệp đính kèm (Attachment)'], a: 1 },
+                         { q: 'Biểu tượng kẹp giấy trong email dùng để làm gì?', o: ['Xóa thư', 'Gửi thư', 'Đính kèm tệp', 'Trả lời thư'], a: 2 }
+                    ]
+                },
+                {
+                    id: 'cong-tac',
+                    icon: '🤝',
+                    title: 'Cộng tác',
+                     theory: `
+                        <h4>1. Sức mạnh của làm việc nhóm</h4>
+                        <p>Cộng tác là cùng nhau làm việc để đạt một mục tiêu chung. Nhờ có Internet, chúng ta có thể <strong>cộng tác trực tuyến</strong>, nghĩa là nhiều người ở nhiều nơi khác nhau có thể cùng làm việc trên một tài liệu duy nhất.</p>
+                        <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=2070&auto=format&fit=crop" alt="Cộng tác trực tuyến" onerror="this.onerror=null;this.src='https://placehold.co/600x300/fee2e2/991b1b?text=Không+tải+được+ảnh';">
+                        
+                        <h4>2. Nguyên tắc vàng khi cộng tác</h4>
+                        <p>Để làm việc nhóm hiệu quả và vui vẻ, chúng ta cần tuân theo các quy tắc sau:</p>
+                        <ul class="list-disc list-inside space-y-1 pl-4 my-2">
+                            <li><strong>Tôn trọng:</strong> Không tự ý xóa hay sửa đổi phần của bạn khác khi chưa hỏi ý kiến. Mỗi người đều có ý tưởng riêng đáng được lắng nghe.</li>
+                            <li><strong>Giao tiếp:</strong> Thường xuyên trao đổi, thảo luận với các thành viên trong nhóm. Nếu có thắc mắc, hãy hỏi ngay.</li>
+                            <li><strong>Trách nhiệm:</strong> Hoàn thành tốt phần việc được giao của mình và đúng hạn.</li>
+                            <li><strong>Giúp đỡ:</strong> Nếu thấy bạn gặp khó khăn, hãy sẵn lòng giúp đỡ.</li>
+                        </ul>
+                    `,
+                    practice: `
+                        <ol class="list-decimal list-inside space-y-3">
+                            <li><strong>Đóng vai:</strong> Bố/mẹ và bé cùng đóng vai hai người bạn đang làm chung một bài thuyết trình PowerPoint online. Thực hành các tình huống:</li>
+                             <ul class="list-circle list-inside pl-6">
+                                <li>"Làm thế nào để góp ý cho slide của bạn một cách lịch sự?" (Ví dụ: "Tớ thấy ý này hay, nhưng mình thử đổi màu chữ cho dễ đọc hơn nhé?").</li>
+                                <li>"Nếu không đồng ý với ý kiến của bạn thì nên nói gì?" (Ví dụ: "Ý của cậu cũng hay, nhưng tớ có một ý khác là...").</li>
+                            </ul>
+                            <li><strong>Lập kế hoạch:</strong> Giả sử lớp có bài tập nhóm làm về "Các loài hoa", hãy cùng bé phân chia công việc: Bạn A tìm ảnh, bạn B viết lời giới thiệu...</li>
+                        </ol>
+                    `,
+                    quiz: [
+                         { q: 'Khi làm bài tập nhóm trên Google Docs, nếu thấy phần của bạn làm chưa tốt, con nên làm gì?', o: ['Lặng lẽ xóa đi và viết lại theo ý mình.', 'Nhắn tin riêng cho bạn và nhẹ nhàng góp ý.', 'Mách cô giáo là bạn làm không tốt.', 'Không làm gì cả.'], a: 1 },
+                         { q: 'Hành động nào thể hiện sự tôn trọng khi làm việc nhóm online?', o: ['Tự quyết định mọi thứ.', 'Chỉ làm phần của mình.', 'Lắng nghe và thảo luận ý kiến của các bạn.', 'Xóa bài của bạn khác nếu không thích.'], a: 2 },
+                         { q: 'Lợi ích của việc cộng tác trực tuyến là gì?', o: ['Chỉ một người được làm việc.', 'Mọi người có thể làm việc cùng nhau dù ở xa.', 'Tốn nhiều thời gian hơn.', 'Chỉ dùng để chơi game.'], a: 1 },
+                         { q: 'Nếu một bạn trong nhóm không làm bài, con nên làm gì?', o: ['Làm thay phần của bạn đó.', 'Nhẹ nhàng hỏi thăm và động viên bạn.', 'Không quan tâm.', 'Mắng bạn đó trên nhóm chung.'], a: 1 }
+                    ]
+                },
+                 {
+                    id: 'an-toan-an-ninh',
+                    icon: '🛡️',
+                    title: 'An toàn & An ninh',
+                    theory: `
+                        <h4>1. Bảo vệ thông tin cá nhân - "Kho báu" của con</h4>
+                        <p>Thông tin cá nhân là những thông tin riêng tư như họ tên đầy đủ, ngày sinh, địa chỉ nhà, số điện thoại, tên trường lớp. Đây là "kho báu" của con. <strong class="text-red-600">Tuyệt đối không chia sẻ</strong> cho người lạ trên mạng.</p>
+                        
+                        <h4>2. Mật khẩu (Password) - Chìa khóa vào ngôi nhà số</h4>
+                        <p>Mật khẩu là chìa khóa vào "ngôi nhà" online của mình (email, tài khoản game...). Con phải giữ bí mật, không cho ai biết, kể cả bạn thân. Một mật khẩu mạnh nên có cả chữ hoa, chữ thường, số và ký tự đặc biệt (ví dụ: MeoConThichAnCa25!).</p>
+                        
+                        <h4>3. Các mối nguy hiểm trên mạng</h4>
+                        <p>Internet có nhiều điều thú vị nhưng cũng có những kẻ xấu. Con cần biết để phòng tránh:</p>
+                        <img src="https://images.pexels.com/photos/60504/security-protection-anti-virus-software-60504.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Các mối nguy hiểm trên mạng" onerror="this.onerror=null;this.src='https://placehold.co/600x300/dbeafe/1e3a8a?text=Không+tải+được+ảnh';">
+                        <ul class="list-disc list-inside space-y-1 pl-4 my-2">
+                            <li><strong>Virus:</strong> Chương trình có hại, làm hỏng máy tính hoặc ăn cắp thông tin. Đừng tải về những tệp lạ.</li>
+                            <li><strong>Lừa đảo (Phishing):</strong> Các email, tin nhắn hoặc trang web giả mạo để lừa con cung cấp mật khẩu hoặc thông tin cá nhân. Thường có dạng "Bạn đã trúng thưởng!", "Tài khoản của bạn bị khóa!".</li>
+                            <li><strong>Bắt nạt trên mạng (Cyberbullying):</strong> Nói xấu, chế giễu, đe dọa người khác trên mạng. Nếu gặp phải, hãy <strong class="text-red-600">nói ngay cho bố mẹ hoặc thầy cô</strong>. Đừng im lặng chịu đựng một mình.</li>
+                        </ul>
+                    `,
+                    practice: `
+                        <ol class="list-decimal list-inside space-y-3">
+                            <li><strong>Kiểm tra độ mạnh mật khẩu:</strong> Cùng bé nghĩ ra một vài mật khẩu và phân tích xem mật khẩu nào mạnh, mật khẩu nào yếu. (Ví dụ: "123456" - yếu, "An2015" - trung bình, "AnYeuMeNhat!2024" - mạnh).</li>
+                            <li><strong>Xử lý tình huống:</strong> Đóng vai: "Có một người lạ trên mạng nhắn tin kết bạn và hỏi con tên gì, học lớp mấy, nhà ở đâu. Con sẽ trả lời như thế nào?". (Đáp án đúng: Không trả lời, chặn người đó và báo ngay cho bố mẹ).</li>
+                            <li><strong>Nhận diện lừa đảo:</strong> Cho bé xem một ví dụ về email lừa đảo (có thể tự tạo) và chỉ ra các dấu hiệu đáng ngờ (lỗi chính tả, yêu cầu cung cấp mật khẩu, quà tặng quá lớn...).</li>
+                        </ol>
+                    `,
+                    quiz: [
+                        { q: 'Thông tin nào sau đây con có thể chia sẻ công khai trên mạng?', o: ['Mật khẩu email của con.', 'Địa chỉ nhà của con.', 'Sở thích của con (ví dụ: thích đọc truyện tranh).', 'Số điện thoại của bố mẹ.'], a: 2 },
+                        { q: 'Nếu nhận được một email lạ với tiêu đề "Bạn đã trúng thưởng!", con nên làm gì?', o: ['Mở ra và làm theo hướng dẫn ngay.', 'Không bấm vào và hỏi ý kiến bố mẹ.', 'Chuyển tiếp cho tất cả bạn bè.', 'Trả lời email để hỏi thêm chi tiết.'], a: 1 },
+                        { q: 'Nếu có người nói xấu con trên mạng, con nên làm gì đầu tiên?', o: ['Nói xấu lại họ.', 'Im lặng và không làm gì.', 'Nói ngay cho bố mẹ hoặc thầy cô.', 'Xóa tài khoản của mình.'], a: 2 },
+                        { q: 'Đâu là một ví dụ về mật khẩu mạnh?', o: ['123456', 'password', 'ngaythangnamsinh', 'HoaHongDo@2025'], a: 3 },
+                        { q: 'Phần mềm giúp bảo vệ máy tính khỏi virus được gọi là gì?', o: ['Phần mềm diệt virus', 'Phần mềm vẽ', 'Trình duyệt web', 'Hệ điều hành'], a: 0 }
+                    ]
+                }
+            ];
+
+            const domainsContainer = document.getElementById('domains-container');
+
+            function createDomainCard(domain) {
+                const card = document.createElement('div');
+                // Changed from individual cards to grid items
+                card.className = 'domain-card bg-white p-6 rounded-2xl shadow-lg';
+                card.innerHTML = `
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="text-3xl">${domain.icon}</div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800">${domain.title}</h3>
+                        </div>
+                    </div>
+                    <div class="border-b border-slate-200 mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-slate-500">
+                        <button class="domain-tab py-2 border-b-2 border-transparent active" data-domain="${domain.id}" data-tab="theory">Lý thuyết</button>
+                        <button class="domain-tab py-2 border-b-2 border-transparent" data-domain="${domain.id}" data-tab="practice">Thực hành</button>
+                        <button class="domain-tab py-2 border-b-2 border-transparent" data-domain="${domain.id}" data-tab="quiz">Ôn tập</button>
+                    </div>
+                    <div class="domain-content-container text-slate-600 prose prose-sm max-w-none">
+                        <div class="domain-content active" id="${domain.id}-theory">${domain.theory}</div>
+                        <div class="domain-content" id="${domain.id}-practice">${domain.practice}</div>
+                        <div class="domain-content" id="${domain.id}-quiz">
+                            <div class="flex justify-end mb-4">
+                                <button class="random-quiz-btn text-xs bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-sky-700 transition-colors" data-domain="${domain.id}">
+                                    🎲 Tạo đề ngẫu nhiên
+                                </button>
+                            </div>
+                            <div class="quiz-render-area"></div>
+                        </div>
+                    </div>
+                `;
+                return card;
+            }
+
+            function renderQuiz(container, quizData, domainId) {
+                container.innerHTML = ''; // Clear previous quiz
+                const quizContainer = document.createElement('div');
+                quizContainer.className = 'space-y-4';
+
+                if (!quizData || quizData.length === 0) {
+                    quizContainer.innerHTML = `<p class="text-center text-slate-500">Không có câu hỏi nào để hiển thị.</p>`;
+                    container.appendChild(quizContainer);
+                    return;
+                }
+                
+                quizData.forEach((item, index) => {
+                    const quizItem = document.createElement('div');
+                    quizItem.className = 'quiz-item bg-slate-50 p-4 rounded-lg';
+                    let optionsHtml = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">';
+                    item.o.forEach((option, optionIndex) => {
+                        optionsHtml += `<div class="quiz-option p-3 rounded-md bg-white border border-slate-200" data-domain="${domainId}" data-q-index="${index}" data-a-index="${optionIndex}">${String.fromCharCode(65 + optionIndex)}. ${option}</div>`;
+                    });
+                    optionsHtml += '</div>';
+                    quizItem.innerHTML = `<p class="font-semibold">${index + 1}. ${item.q}</p>${optionsHtml}`;
+                    quizContainer.appendChild(quizItem);
+                });
+                container.appendChild(quizContainer);
+            }
+
+            function generateAndRenderRandomQuiz(domainId, numQuestions = 4) {
+                const domain = domainData.find(d => d.id === domainId);
+                if (!domain || !domain.quiz) return;
+
+                const shuffled = [...domain.quiz].sort(() => 0.5 - Math.random());
+                const selectedQuestions = shuffled.slice(0, Math.min(numQuestions, shuffled.length));
+                
+                const quizRenderArea = document.querySelector(`#${domainId}-quiz .quiz-render-area`);
+                renderQuiz(quizRenderArea, selectedQuestions, domainId);
+            }
+            
+            domainData.forEach(domain => {
+                const card = createDomainCard(domain);
+                domainsContainer.appendChild(card);
+                const quizRenderArea = card.querySelector(`#${domain.id}-quiz .quiz-render-area`);
+                generateAndRenderRandomQuiz(domain.id, 4);
+            });
+
+            domainsContainer.addEventListener('click', function(e) {
+                const quizOption = e.target.closest('.quiz-option');
+                if (quizOption && !quizOption.classList.contains('disabled')) {
+                    const domainId = quizOption.dataset.domain;
+                    const questionIndexInUI = parseInt(quizOption.dataset.qIndex);
+                    const answerIndex = parseInt(quizOption.dataset.aIndex);
+                    
+                    const quizRenderArea = quizOption.closest('.quiz-render-area');
+                    const displayedQuestionText = quizRenderArea.querySelectorAll('.quiz-item p.font-semibold')[questionIndexInUI].textContent.split('. ')[1];
+
+                    const domain = domainData.find(d => d.id === domainId);
+                    const question = domain.quiz.find(q => q.q === displayedQuestionText);
+
+                    if (!question) return;
+                    
+                    const options = quizOption.parentElement.querySelectorAll('.quiz-option');
+                    options.forEach(opt => opt.classList.add('disabled'));
+
+                    if (answerIndex === question.a) {
+                        quizOption.classList.add('correct');
+                    } else {
+                        quizOption.classList.add('incorrect');
+                        options[question.a].classList.add('correct');
+                    }
+                }
+                
+                if (e.target.matches('.domain-tab')) {
+                    const domainId = e.target.dataset.domain;
+                    const tabId = e.target.dataset.tab;
+                    const card = e.target.closest('.domain-card');
+
+                    card.querySelectorAll('.domain-tab').forEach(tab => tab.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    card.querySelectorAll('.domain-content').forEach(content => content.classList.remove('active'));
+                    card.querySelector(`#${domainId}-${tabId}`).classList.add('active');
+                }
+
+                if (e.target.matches('.random-quiz-btn')) {
+                    const domainId = e.target.dataset.domain;
+                    generateAndRenderRandomQuiz(domainId, 4);
+                }
+            });
+
+
+            mainNav.addEventListener('click', function(e) {
+                e.preventDefault();
+                const link = e.target.closest('a');
+                if (!link) return;
+
+                const targetId = link.dataset.target;
+                if (!targetId) return;
+
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                contentSections.forEach(section => {
+                    if (section.id === targetId) {
+                        section.classList.add('active');
+                    } else {
+                        section.classList.remove('active');
+                    }
+                });
+            });
+
+            const ctx = document.getElementById('domainsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: domainData.map(d => d.title),
+                    datasets: [{
+                        label: 'Các chuyên đề',
+                        data: [1, 1, 1, 1, 1, 1, 1],
+                        backgroundColor: [
+                            '#38bdf8', '#34d399', '#facc15', '#fb923c', '#f87171', '#a78bfa', '#60a5fa'
+                        ],
+                        borderColor: '#f8fafc',
+                        borderWidth: 4,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
