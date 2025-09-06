@@ -788,6 +788,14 @@ class MathGameAdvanced {
 
     // Thiết lập event listeners
     setupEventListeners() {
+        // Time per question selection
+        const timeOptions = document.querySelectorAll('.time-option');
+        timeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                this.selectTimePerQuestion(parseInt(option.dataset.value));
+            });
+        });
+        
         console.log('🎛️ Đang thiết lập event listeners...');
         
         // Question selection
@@ -879,6 +887,35 @@ class MathGameAdvanced {
         
         console.log(`🎯 Đã chọn ${count} câu hỏi`);
     }
+
+    // Chọn thời gian mỗi câu
+    selectTimePerQuestion(seconds) {
+        // Gỡ 'selected' khỏi tất cả lựa chọn thời gian
+        document.querySelectorAll('.time-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        // Đánh dấu lựa chọn mới
+        const chosen = document.querySelector(`.time-option[data-value="${seconds}"]`);
+        if (chosen) chosen.classList.add('selected');
+
+        // Cập nhật biến cấu hình
+        this.timePerQuestion = parseInt(seconds, 10);
+        this.timeLeft = this.timePerQuestion;
+
+        // Nếu đang ở màn hình game, cập nhật hiển thị ngay
+        const timerText = document.getElementById('timerText');
+        if (timerText) {
+            timerText.textContent = `${this.timePerQuestion}s`;
+        }
+        // Reset vòng tròn đếm
+        const timerCircle = document.getElementById('timerCircle');
+        if (timerCircle) {
+            timerCircle.style.strokeDasharray = '219.911'; // circumference ~2πr with r=35
+            timerCircle.style.strokeDashoffset = '0';
+        }
+        console.log(`⏱️ Đã chọn thời gian: ${this.timePerQuestion}s mỗi câu`);
+    }
+    
 
     // Tính toán phân bổ câu hỏi theo tỷ lệ
     calculateQuestionDistribution() {
@@ -1024,6 +1061,13 @@ class MathGameAdvanced {
 
     // Bắt đầu trò chơi
     startGame() {
+        // Đọc thời gian mỗi câu từ lựa chọn (nếu có)
+        const selectedTimeOpt = document.querySelector('.time-option.selected');
+        if (selectedTimeOpt) {
+            this.timePerQuestion = parseInt(selectedTimeOpt.dataset.value, 10);
+        }
+        this.timeLeft = this.timePerQuestion;
+        
         const nameInput = document.getElementById('playerName');
         const name = nameInput.value.trim();
         
