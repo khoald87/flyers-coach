@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌟 Thử Thách Toán Học Sinh Động - Lớp 3</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/tone@14.7.77/build/Tone.js"></script>
+</head>
+<body>
+    <!-- Nút điều khiển âm thanh -->
+    <button id="soundToggle" class="sound-toggle pulse-glow" aria-label="Bật/tắt âm thanh">
+        <span id="soundIcon">🔊</span>
+    </button>
+
+    <!-- Confetti Container -->
+    <div id="confettiContainer" class="confetti-container"></div>
+
+    <!-- Màn hình bắt đầu -->
+    <div id="startScreen" class="screen active">
+        <div class="container">
+            <div class="game-card rainbow-border">
+                <div class="title-section">
+                    <h1 class="game-title gradient-text bounce-in">🧮✨ Học Toán Siêu Vui Cùng Vương Khang ✨🎯</h1>
+                    <p class="game-subtitle typing-text">Dành cho các em học sinh lớp 3 thông minh! 🌈</p>
+                </div>
+                
+                <div class="input-section">
+                    <div class="form-group">
+                        <label for="playerName" class="form-label fun-label">👦👧 Tên của bạn:</label>
+                        <input type="text" id="playerName" class="form-control magical-input" placeholder="Nhập tên siêu nhân toán học..." maxlength="20">
+                    </div>
+                    
+                    <!-- Section chọn số câu hỏi -->
+                    <div class="question-selection-section">
+                        <h3 class="selection-title">🎯 Chọn Số Câu Hỏi:</h3>
+                        <div class="question-options-grid">
+                            <div class="question-option" data-value="10">
+                                <div class="option-icon">⚡</div>
+                                <div class="option-label">10 câu</div>
+                                <div class="option-time">7-10 phút</div>
+                                <div class="option-description">Thử sức nhanh</div>
+                                <div class="difficulty-preview">
+                                    <span class="diff-basic">4 ⭐</span>
+                                    <span class="diff-advanced">3 ⭐⭐</span>
+                                    <span class="diff-expert">3 ⭐⭐⭐</span>
+                                </div>
+                            </div>
+                            <div class="question-option" data-value="15">
+                                <div class="option-icon">🎯</div>
+                                <div class="option-label">15 câu</div>
+                                <div class="option-time">12-15 phút</div>
+                                <div class="option-description">Vừa phải</div>
+                                <div class="difficulty-preview">
+                                    <span class="diff-basic">6 ⭐</span>
+                                    <span class="diff-advanced">5 ⭐⭐</span>
+                                    <span class="diff-expert">4 ⭐⭐⭐</span>
+                                </div>
+                            </div>
+                            <div class="question-option selected" data-value="20">
+                                <div class="option-icon">🔥</div>
+                                <div class="option-label">20 câu</div>
+                                <div class="option-time">15-20 phút</div>
+                                <div class="option-description">Thách thức</div>
+                                <div class="difficulty-preview">
+                                    <span class="diff-basic">8 ⭐</span>
+                                    <span class="diff-advanced">6 ⭐⭐</span>
+                                    <span class="diff-expert">6 ⭐⭐⭐</span>
+                                </div>
+                            </div>
+                            <div class="question-option" data-value="30">
+                                <div class="option-icon">👑</div>
+                                <div class="option-label">30 câu</div>
+                                <div class="option-time">25-30 phút</div>
+                                <div class="option-description">Siêu khó</div>
+                                <div class="difficulty-preview">
+                                    <span class="diff-basic">12 ⭐</span>
+                                    <span class="diff-advanced">9 ⭐⭐</span>
+                                    <span class="diff-expert">9 ⭐⭐⭐</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="difficulty-explanation">
+                            <p><strong>📋 Cấu trúc đề thi:</strong></p>
+                            <div class="diff-breakdown">
+                                <span class="diff-item basic">40% Cơ bản ⭐</span>
+                                <span class="diff-item advanced">30% Nâng cao ⭐⭐</span>
+                                <span class="diff-item expert">30% Khó ⭐⭐⭐</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="startBtn" class="btn btn--primary btn--lg btn--full-width magical-button">
+                        🚀 Bắt Đầu Phiêu Lưu Toán Học! 
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Màn hình chơi game -->
+    <div id="gameScreen" class="screen">
+        <div class="container">
+            <div class="game-info">
+                <div class="score-section rainbow-gradient">
+                    <div class="score-item bounce-scale">
+                        <span class="score-emoji">⭐</span>
+                        <span class="score-label">Điểm số:</span>
+                        <span id="currentScore" class="score-value glow-text">0</span>
+                    </div>
+                    <div class="score-item bounce-scale">
+                        <span class="score-emoji">🎯</span>
+                        <span class="score-label">Câu hỏi:</span>
+                        <span id="questionCounter" class="score-value glow-text">1 / 20</span>
+                    </div>
+                    <div class="score-item bounce-scale">
+                        <span class="score-emoji">⏱️</span>
+                        <span class="score-label">Tổng thời gian:</span>
+                        <span id="totalTime" class="score-value glow-text">00:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timer-section">
+                <div class="timer-display magical-timer">
+                    <span id="timerText" class="timer-number">20s</span>
+                    <div class="timer-animation">
+                        <div class="timer-circle">
+                            <svg class="timer-svg" width="80" height="80">
+                                <circle cx="40" cy="40" r="35" class="timer-bg"></circle>
+                                <circle cx="40" cy="40" r="35" class="timer-progress" id="timerCircle"></circle>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="timer-bar rainbow-timer">
+                    <div id="timerProgress" class="timer-progress-bar"></div>
+                </div>
+            </div>
+
+            <!-- Question difficulty indicator -->
+            <div class="question-difficulty-indicator">
+                <span id="questionDifficulty" class="difficulty-badge basic">⭐ Cơ bản</span>
+                <span id="questionProgress" class="question-progress">Câu 1/20</span>
+            </div>
+
+            <div class="question-card magical-card slide-in">
+                <div class="question-content">
+                    <h2 id="questionText" class="question-title typing-effect">Đang tạo câu hỏi ma thuật...</h2>
+                    <div id="questionImage" class="question-image hidden bounce-in"></div>
+                </div>
+                <div class="answers-grid">
+                    <button class="answer-btn color-blue magical-hover" data-answer="0">
+                        <span class="answer-letter">A</span>
+                        <span class="answer-text">Đang tải...</span>
+                        <div class="answer-sparkle">✨</div>
+                    </button>
+                    <button class="answer-btn color-green magical-hover" data-answer="1">
+                        <span class="answer-letter">B</span>
+                        <span class="answer-text">Đang tải...</span>
+                        <div class="answer-sparkle">✨</div>
+                    </button>
+                    <button class="answer-btn color-purple magical-hover" data-answer="2">
+                        <span class="answer-letter">C</span>
+                        <span class="answer-text">Đang tải...</span>
+                        <div class="answer-sparkle">✨</div>
+                    </button>
+                    <button class="answer-btn color-pink magical-hover" data-answer="3">
+                        <span class="answer-letter">D</span>
+                        <span class="answer-text">Đang tải...</span>
+                        <div class="answer-sparkle">✨</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Màn hình kết thúc -->
+    <div id="endScreen" class="screen">
+        <div class="container">
+            <div class="game-card victory-card">
+                <div class="end-header">
+                    <h1 class="end-title celebration-text">🎉✨ Hoàn Thành Xuất Sắc! ✨🎉</h1>
+                    <div class="final-score">
+                        <p class="score-text">Kết quả của siêu nhân <span id="finalPlayerName" class="player-highlight"></span>:</p>
+                        <div id="finalScore" class="score-display rainbow-text">0</div>
+                        <div id="scoreMessage" class="score-message bounce-glow">Chúc mừng!</div>
+                    </div>
+                </div>
+
+                <!-- Thống kê chi tiết theo mức độ -->
+                <div class="detailed-stats">
+                    <h3 class="stats-title">📊 Thành Tích Theo Mức Độ</h3>
+                    <div class="difficulty-stats-grid">
+                        <div class="difficulty-stat-card basic-stat">
+                            <div class="stat-difficulty-icon">⭐</div>
+                            <div class="stat-difficulty-label">Cơ bản</div>
+                            <div class="stat-difficulty-score">
+                                <span id="basicCorrect">0</span>/<span id="basicTotal">0</span>
+                            </div>
+                            <div class="stat-difficulty-percentage" id="basicPercentage">0%</div>
+                        </div>
+                        <div class="difficulty-stat-card advanced-stat">
+                            <div class="stat-difficulty-icon">⭐⭐</div>
+                            <div class="stat-difficulty-label">Nâng cao</div>
+                            <div class="stat-difficulty-score">
+                                <span id="advancedCorrect">0</span>/<span id="advancedTotal">0</span>
+                            </div>
+                            <div class="stat-difficulty-percentage" id="advancedPercentage">0%</div>
+                        </div>
+                        <div class="difficulty-stat-card expert-stat">
+                            <div class="stat-difficulty-icon">⭐⭐⭐</div>
+                            <div class="stat-difficulty-label">Khó</div>
+                            <div class="stat-difficulty-score">
+                                <span id="expertCorrect">0</span>/<span id="expertTotal">0</span>
+                            </div>
+                            <div class="stat-difficulty-percentage" id="expertPercentage">0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thống kê tổng quan -->
+                <div class="general-stats">
+                    <h3 class="stats-title">📈 Thống Kê Tổng Quan</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card correct-stats">
+                            <div class="stat-icon">✅</div>
+                            <div class="stat-value" id="correctAnswers">0</div>
+                            <div class="stat-label">Câu đúng</div>
+                        </div>
+                        <div class="stat-card wrong-stats">
+                            <div class="stat-icon">❌</div>
+                            <div class="stat-value" id="wrongAnswers">0</div>
+                            <div class="stat-label">Câu sai</div>
+                        </div>
+                        <div class="stat-card time-stats">
+                            <div class="stat-icon">⏰</div>
+                            <div class="stat-value" id="finalTotalTime">00:00</div>
+                            <div class="stat-label">Tổng thời gian</div>
+                        </div>
+                        <div class="stat-card average-stats">
+                            <div class="stat-icon">📈</div>
+                            <div class="stat-value" id="averageTime">0s</div>
+                            <div class="stat-label">TB mỗi câu</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Đánh giá thành tích -->
+                <div class="achievement-section">
+                    <div id="achievementBadge" class="achievement-badge">
+                        <div class="badge-icon">🏆</div>
+                        <div class="badge-text">Xuất sắc!</div>
+                    </div>
+                    <div id="achievementMessage" class="achievement-message">
+                        Thật tuyệt vời! Bạn là thiên tài toán học! 🌟
+                    </div>
+                    <div id="suggestionMessage" class="suggestion-message">
+                        <!-- Gợi ý cải thiện sẽ được tạo bởi JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Bảng xếp hạng -->
+                <div class="leaderboard">
+                    <h3 class="leaderboard-title">🏆 Bảng Xếp Hạng Siêu Sao</h3>
+                    <div id="leaderboardList" class="leaderboard-list">
+                        <!-- Bảng xếp hạng sẽ được tạo bằng JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Nút điều khiển với chức năng được sửa -->
+                <div class="action-buttons">
+                    <button id="newGameBtn" class="btn btn--primary btn--lg magical-button">
+                        🆕 Làm Bài Mới
+                    </button>
+                    <button id="practiceAgainBtn" class="btn btn--secondary btn--lg magical-button">
+                        🔄 Luyện Tập Lại
+                    </button>
+                    <button id="homeBtn" class="btn btn--outline btn--lg magical-button">
+                        🏠 Về Trang Chủ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading overlay với hiệu ứng ma thuật -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-content magical-loading">
+            <div class="loading-spinner rainbow-spinner"></div>
+            <div class="loading-text">
+                <p class="loading-main">Đang tạo câu hỏi ma thuật...</p>
+                <p class="loading-sub">✨ Chuẩn bị phép thuật toán học ✨</p>
+            </div>
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
